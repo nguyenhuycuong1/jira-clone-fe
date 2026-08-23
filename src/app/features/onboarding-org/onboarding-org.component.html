@@ -1,0 +1,236 @@
+<div class="onboarding-org">
+  <!-- Top bar -->
+  <header class="onboarding-org__topbar">
+    <div class="onboarding-org__logo">
+      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="48" height="48" rx="12" fill="currentColor"/>
+        <path d="M14 16h8c4.418 0 8 3.582 8 8s-3.582 8-8 8h-8V16z" fill="#fff" opacity="0.9"/>
+        <path d="M28 20h-8c-4.418 0-8 3.582-8 8s3.582 8 8 8h8V20z" fill="#fff" opacity="0.6"/>
+      </svg>
+      <span class="onboarding-org__logo-text">Jira Clone</span>
+    </div>
+    <a class="onboarding-org__logout" [tabindex]="-1" (click)="logout()">Đăng xuất</a>
+  </header>
+
+  <!-- Page content -->
+  <main class="onboarding-org__content">
+    <!-- Stepper -->
+    <ol class="onboarding-org__steps">
+      <li
+        class="onboarding-org__steps-item"
+        [class.active]="step() === 'select'"
+        [class.done]="step() !== 'select'"
+      >
+        <span class="onboarding-org__steps-num">
+          @if (step() !== 'select') {
+            <nz-icon nzType="check"></nz-icon>
+          } @else {
+            1
+          }
+        </span>
+        <span class="onboarding-org__steps-label">Chọn hành động</span>
+      </li>
+      <li class="onboarding-org__steps-bar" [class.done]="step() !== 'select'"></li>
+      <li
+        class="onboarding-org__steps-item"
+        [class.active]="step() === 'form'"
+        [class.done]="step() === 'done'"
+      >
+        <span class="onboarding-org__steps-num">2</span>
+        <span class="onboarding-org__steps-label">Nhập thông tin</span>
+      </li>
+    </ol>
+
+    <!-- Step 1: choose action -->
+    @if (step() === 'select') {
+      <div class="onboarding-org__step">
+        <div class="onboarding-org__hero">
+          <h1 class="onboarding-org__title">Bạn muốn làm gì?</h1>
+          <p class="onboarding-org__subtitle">
+            Chào {{ greeting() }}, hãy chọn cách bắt đầu của bạn.
+          </p>
+        </div>
+
+        <div class="onboarding-org__choices">
+          <button type="button" class="onboarding-org__choice" (click)="choose('create')">
+            <span class="onboarding-org__choice-icon onboarding-org__choice-icon--create">✨</span>
+            <span class="onboarding-org__choice-body">
+              <strong>Tạo organization mới</strong>
+              <small>Thiết lập không gian làm việc riêng cho bạn và đội ngũ của bạn</small>
+            </span>
+            <nz-icon nzType="right" class="onboarding-org__choice-arrow"></nz-icon>
+          </button>
+          <button type="button" class="onboarding-org__choice" (click)="choose('join')">
+            <span class="onboarding-org__choice-icon onboarding-org__choice-icon--join">🔗</span>
+            <span class="onboarding-org__choice-body">
+              <strong>Tham gia organization</strong>
+              <small>Vào một organization mà bạn đã được mời tham gia</small>
+            </span>
+            <nz-icon nzType="right" class="onboarding-org__choice-arrow"></nz-icon>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Step 2: create form -->
+    @if (step() === 'form' && mode() === 'create') {
+      <div class="onboarding-org__step">
+        <button type="button" class="onboarding-org__back" (click)="backToSelect()">
+          <nz-icon nzType="arrow-left"></nz-icon>
+          Quay lại
+        </button>
+
+        <h2 class="onboarding-org__step-title">Tạo organization mới</h2>
+        <p class="onboarding-org__step-desc">
+          Điền thông tin để thiết lập organization của bạn. Bạn có thể thay đổi sau.
+        </p>
+
+        <form [formGroup]="createForm" class="onboarding-org__form">
+          <div class="onboarding-org__field">
+            <label class="form-label" for="org-name">Tên organization</label>
+            <input
+              nz-input
+              id="org-name"
+              type="text"
+              placeholder="vd: Acme Software"
+              [formControlName]="'orgName'"
+              (input)="onNameInput()"
+            />
+          </div>
+          <div class="onboarding-org__field">
+            <label class="form-label" for="org-slug">Mã organization</label>
+            <input
+              nz-input
+              id="org-slug"
+              type="text"
+              placeholder="acme-software"
+              [formControlName]="'slug'"
+              (input)="onSlugInput()"
+            />
+            <p class="onboarding-org__hint">
+              Organization sẽ hiển thị tại
+              <span class="onboarding-org__url">
+                jira-clone.app/{{ createForm.get('slug')?.value || 'ma-cua-ban' }}
+              </span>
+            </p>
+          </div>
+          <div class="onboarding-org__field">
+            <label class="form-label">Loại team chính</label>
+            <nz-select
+              [formControlName]="'teamType'"
+              nzAllowClear
+              nzPlaceHolder="Chọn loại team (tùy chọn)"
+            >
+              @for (t of teamTypes; track t.value) {
+                <nz-option [nzValue]="t.value" [nzLabel]="t.label"></nz-option>
+              }
+            </nz-select>
+          </div>
+          <div class="onboarding-org__field">
+            <label class="form-label">Mô tả</label>
+            <textarea
+              nz-input
+              rows="3"
+              placeholder="Đội ngũ của bạn làm gì? (tùy chọn)"
+              [formControlName]="'description'"
+            ></textarea>
+          </div>
+
+          <div class="onboarding-org__actions">
+            <app-button variant="secondary" (click)="backToSelect()">Hủy</app-button>
+            <app-button type="button" variant="primary" (click)="onCreate()">
+              Tạo organization
+            </app-button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Step 2: join form -->
+    @if (step() === 'form' && mode() === 'join') {
+      <div class="onboarding-org__step">
+        <button type="button" class="onboarding-org__back" (click)="backToSelect()">
+          <nz-icon nzType="arrow-left"></nz-icon>
+          Quay lại
+        </button>
+
+        <h2 class="onboarding-org__step-title">Tham gia organization</h2>
+        <p class="onboarding-org__step-desc">
+          Nhập mã organization hoặc email mời mà bạn nhận được.
+        </p>
+
+        <form [formGroup]="joinForm" class="onboarding-org__form">
+          <div class="onboarding-org__field">
+            <label class="form-label" for="org-join-key">Mã organization hoặc email mời</label>
+            <div class="onboarding-org__join-row">
+              <input
+                nz-input
+                id="org-join-key"
+                type="text"
+                placeholder="vd: acme-software hoặc ban@acme.com"
+                [formControlName]="'orgKey'"
+              />
+              <app-button type="button" variant="primary" (click)="onJoin()">
+                Tham gia
+              </app-button>
+            </div>
+          </div>
+        </form>
+
+        <div class="onboarding-org__divider">
+          <span>hoặc chọn một organization công khai</span>
+        </div>
+
+        <ul class="onboarding-org__org-list">
+          @for (org of sampleOrgs; track org.slug) {
+            <li class="onboarding-org__org-item">
+              <span class="onboarding-org__org-avatar onboarding-org__org-avatar--{{ org.color }}">
+                {{ org.name.charAt(0) }}
+              </span>
+              <div class="onboarding-org__org-info">
+                <div class="onboarding-org__org-name">
+                  {{ org.name }}
+                  <nz-tag [nzColor]="org.tagColor">{{ org.tag }}</nz-tag>
+                </div>
+                <div class="onboarding-org__org-meta">
+                  <span class="role-code">{{ org.slug }}</span>
+                  <span class="onboarding-org__org-members">
+                    <nz-icon nzType="team"></nz-icon>
+                    {{ org.members }} thành viên
+                  </span>
+                </div>
+              </div>
+              <app-button variant="secondary" (click)="joinSample(org)">
+                Tham gia
+              </app-button>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- Step 3: done -->
+    @if (step() === 'done' && doneInfo()) {
+      <div class="onboarding-org__step onboarding-org__done">
+        <div class="onboarding-org__done-icon">
+          <nz-icon nzType="check"></nz-icon>
+        </div>
+        <h2 class="onboarding-org__done-title">{{ doneInfo()!.title }}</h2>
+        <p class="onboarding-org__done-desc">{{ doneInfo()!.description }}</p>
+
+        <div class="onboarding-org__done-summary">
+          @for (row of doneInfo()!.rows; track row.label) {
+            <div class="onboarding-org__done-row">
+              <span>{{ row.label }}</span>
+              <strong>{{ row.value }}</strong>
+            </div>
+          }
+        </div>
+
+        <app-button type="button" variant="primary" (click)="goToHome()">
+          Vào workspace
+        </app-button>
+      </div>
+    }
+  </main>
+</div>

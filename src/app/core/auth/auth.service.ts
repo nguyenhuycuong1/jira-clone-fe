@@ -46,6 +46,14 @@ export class AuthService {
       );
   }
 
+  setCurrentOrg(org_id: string): Observable<JwtResponse> {
+    return this.httpClient.post<JwtResponse>(`${this.authApiEndpoint}/set-org/${org_id}`,{}).pipe(
+      tap(res => {
+        this.setAccessToken(res.accessToken);
+      })
+    )
+  }
+
   logout(): Observable<void> {
     return this.httpClient.post<void>(`${this.authApiEndpoint}/logout`, {}, {
       withCredentials: true,

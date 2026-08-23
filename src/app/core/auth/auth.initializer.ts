@@ -12,7 +12,7 @@ export function initializeAuth(): () => Promise<void> {
       await firstValueFrom(
         authService.refreshToken()
       )
-      router.navigate(['/']).then();
+      // router.navigate(['/']).then();
     } catch {
       authService.logout().subscribe({
         next: () => {

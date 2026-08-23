@@ -9,6 +9,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/login/login.component'),
   },
   {
+    path: 'onboarding-org',
+    loadComponent: () => import('./features/onboarding-org/onboarding-org.component'),
+    canActivate: [authGuard],
+    title: 'Chọn organization',
+  },
+  {
     path: '',
     component: MainComponent,
     canActivate: [authGuard],
