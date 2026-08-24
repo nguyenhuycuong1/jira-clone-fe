@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSelectModule } from 'ng-zorro-antd/select';
@@ -7,6 +7,8 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { AppButtonComponent } from '../../shared/app-button/app-button.component';
 import { BaseComponent } from '../../shared/base/base.component';
 import { AuthService } from '../../core/auth/auth.service';
+import { OrganizationRequest, OrganizationResponse } from './model/organization.model';
+import { OrganizationService } from './service/organization.service';
 
 export interface OrgSample {
   slug: string;
@@ -37,21 +39,51 @@ type Mode = 'create' | 'join';
     NzInputModule,
     NzSelectModule,
     NzTagModule,
+    FormsModule,
   ],
 })
 export default class OnboardingOrgComponent extends BaseComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
+  private readonly organizationService = inject(OrganizationService);
 
   protected readonly step = signal<Step>('select');
   protected readonly mode = signal<Mode>('create');
   protected readonly doneInfo = signal<DoneInfo | null>(null);
 
+  protected createFrom: OrganizationRequest = {
+    orgName: '',
+    slug: '',
+    description: '',
+    status: 'active'
+  }
+
   // Dữ liệu mẫu chỉ để preview UI — thay bằng API khi tích hợp
   protected readonly sampleOrgs: OrgSample[] = [
-    { slug: 'acme-software', name: 'Acme Software', members: 24, tag: 'Dev', tagColor: 'blue', color: 'teal' },
-    { slug: 'nova-design', name: 'Nova Design', members: 12, tag: 'Design', tagColor: 'purple', color: 'purple' },
-    { slug: 'mega-market', name: 'Mega Market', members: 40, tag: 'Marketing', tagColor: 'orange', color: 'amber' },
+    {
+      slug: 'acme-software',
+      name: 'Acme Software',
+      members: 24,
+      tag: 'Dev',
+      tagColor: 'blue',
+      color: 'teal',
+    },
+    {
+      slug: 'nova-design',
+      name: 'Nova Design',
+      members: 12,
+      tag: 'Design',
+      tagColor: 'purple',
+      color: 'purple',
+    },
+    {
+      slug: 'mega-market',
+      name: 'Mega Market',
+      members: 40,
+      tag: 'Marketing',
+      tagColor: 'orange',
+      color: 'amber',
+    },
   ];
 
   protected readonly teamTypes = [
@@ -62,26 +94,11 @@ export default class OnboardingOrgComponent extends BaseComponent {
     { value: 'other', label: 'Khác' },
   ];
 
-  // Tên field orgName/slug đồng bộ với OrganizationRequest (model/organization.model.ts)
-  protected createForm = this.fb.group({
-    orgName: ['', [Validators.required, Validators.minLength(3)]],
-    slug: [
-      '',
-      [Validators.required, Validators.pattern(/^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])?$/)],
-    ],
-    teamType: [''],
-    description: [''],
-  });
-
   protected joinForm = this.fb.group({
     orgKey: ['', [Validators.required]],
   });
 
   private slugEdited = false;
-
-  protected greeting(): string {
-    return this.account?.displayName || this.account?.username || 'Bạn';
-  }
 
   protected choose(mode: Mode): void {
     this.mode.set(mode);
@@ -92,34 +109,34 @@ export default class OnboardingOrgComponent extends BaseComponent {
     this.step.set('select');
   }
 
-  protected onNameInput(): void {
-    if (!this.slugEdited) {
-      const slug = this.toSlug(this.createForm.get('orgName')?.value ?? '');
-      this.createForm.patchValue({ slug });
-    }
-  }
-
   protected onSlugInput(): void {
     this.slugEdited = true;
   }
 
+  protected onCheckExistOrgName(orgName: string): void {
+    this.organizationService.checkExistOrgName(orgName).subscribe({
+      next: (isExist: boolean) => {
+        if (isExist) {
+          this.toast.error('Tên tổ chức đã tồn tại. Vui lòng thử tên khác!');
+        } else {
+          this.choose('create');
+        }
+      },
+      error: err => {
+        this.toast.error(err.error.error);
+      }
+    })
+  }
+
   protected onCreate(): void {
-    if (this.createForm.invalid) {
-      this.handleCreateFormErrors();
-      return;
-    }
-    const orgName = this.createForm.get('orgName')?.value ?? '';
-    const slug = this.createForm.get('slug')?.value ?? '';
-    this.doneInfo.set({
-      title: 'Đã tạo organization thành công',
-      description: `Organization "${orgName}" của bạn đã sẵn sàng. Hãy mời đội ngũ của bạn bắt đầu làm việc cùng.`,
-      rows: [
-        { label: 'Tên organization', value: orgName },
-        { label: 'Mã organization', value: slug },
-        { label: 'URL truy cập', value: `jira-clone.app/${slug}` },
-      ],
+    this.organizationService.creatOrganizationByUser(this.createFrom).subscribe({
+      next: (res: OrganizationResponse) => {
+        this.toast.success('Tạo tổ chức thành công!');
+      },
+      error: (err) => {
+        this.toast.error(err.error.error);
+      },
     });
-    this.step.set('done');
   }
 
   protected onJoin(): void {
@@ -174,24 +191,7 @@ export default class OnboardingOrgComponent extends BaseComponent {
       .replace(/^-|-$/g, '');
   }
 
-  private handleCreateFormErrors(): void {
-    this.createForm.markAllAsTouched();
-    if (this.createForm.get('orgName')?.hasError('required')) {
-      this.toast.error('Tên organization không được bỏ trống!');
-      return;
-    }
-    if (this.createForm.get('orgName')?.hasError('minlength')) {
-      this.toast.error('Tên organization phải có tối thiểu 3 ký tự!');
-      return;
-    }
-    if (this.createForm.get('slug')?.hasError('required')) {
-      this.toast.error('Mã organization không được bỏ trống!');
-      return;
-    }
-    if (this.createForm.get('slug')?.hasError('pattern')) {
-      this.toast.error('Mã chỉ gồm chữ thường, số và dấu gạch nối!');
-    }
-  }
+  private handleCreateFormErrors(): void {}
 
   private handleJoinFormError(): void {
     this.joinForm.markAllAsTouched();

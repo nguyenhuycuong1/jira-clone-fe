@@ -2,6 +2,7 @@ export interface OrganizationRequest {
   orgName: string;
   slug: string;
   status: string;
+  description: string;
 }
 
 export interface OrganizationResponse {
@@ -9,6 +10,7 @@ export interface OrganizationResponse {
   orgName: string;
   slug: string;
   status: string;
+  description: string;
   createAt: Date | string;
 }
 
