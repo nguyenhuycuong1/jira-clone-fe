@@ -13,6 +13,10 @@ export default class HomeComponent extends BaseComponent{
 
   private readonly authService = inject(AuthService);
 
+  goToCreateProject() {
+    this.router.navigate(['/create-project']).then();
+  }
+
   logout() {
     this.authService.logout().subscribe(() => {
       this.router.navigate(['login']).then();

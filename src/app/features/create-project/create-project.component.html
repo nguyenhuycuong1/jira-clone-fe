@@ -1,0 +1,178 @@
+<div class="create-project">
+  <main class="create-project__content">
+
+    <button type="button" class="create-project__back" (click)="onBack()">
+      <nz-icon nzType="arrow-left"></nz-icon>
+      Quay lại
+    </button>
+
+    <header class="create-project__header">
+      <h1 class="create-project__title">Tạo project mới</h1>
+      <p class="create-project__desc">
+        Điền thông tin để thiết lập project của bạn. Bạn có thể chỉnh sửa lại sau này.
+      </p>
+    </header>
+
+    <div class="create-project__card">
+
+      <!-- ── Thông tin cơ bản + Loại project ─────────────────── -->
+      <section class="section" [formGroup]="form">
+
+        <div class="section__group">
+          <div class="section__field">
+            <label class="form-label required" for="project-name">Tên project</label>
+            <input
+              nz-input
+              id="project-name"
+              type="text"
+              placeholder="vd: Website Bán Hàng"
+              maxlength="80"
+              formControlName="name"
+              (input)="onNameInput()"
+            />
+            @if ((form.get('name')?.touched || form.get('name')?.dirty) && form.get('name')?.hasError('required')) {
+              <span class="form-error">Vui lòng nhập tên project!</span>
+            }
+          </div>
+
+          <div class="section__field">
+            <label class="form-label required" for="project-key">Project key</label>
+            <div class="create-project__key-row">
+              <input
+                nz-input
+                id="project-key"
+                type="text"
+                class="create-project__key-input"
+                placeholder="WEB"
+                maxlength="10"
+                formControlName="key"
+                (input)="onKeyInput()"
+              />
+              <span class="create-project__key-preview">{{ keyPreview }}-123</span>
+            </div>
+            <p class="section__hint">
+              Dùng làm tiền tố cho các issue. Issue sẽ có dạng
+              <span class="section__hint-strong">{{ keyPreview }}-123</span>.
+            </p>
+            @if ((form.get('key')?.touched || form.get('key')?.dirty) && form.get('key')?.invalid) {
+              <span class="form-error">
+                Project key gồm 2-10 ký tự, bắt đầu bằng chữ in hoa (A-Z, 0-9).
+              </span>
+            }
+          </div>
+
+          <div class="section__field">
+            <label class="form-label" for="project-desc">Mô tả</label>
+            <textarea
+              nz-input
+              id="project-desc"
+              rows="3"
+              placeholder="Project này là về gì? (tùy chọn)"
+              maxlength="500"
+              formControlName="description"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="section__divider"></div>
+
+        <div class="section__field">
+          <span class="form-label">Loại project</span>
+          <div class="type-grid">
+            @for (opt of typeOptions; track opt.value) {
+              <button
+                type="button"
+                class="type-card"
+                [class.type-card--active]="form.get('type')?.value === opt.value"
+                (click)="selectType(opt.value)"
+              >
+                <span class="type-card__icon">
+                  <nz-icon [nzType]="opt.icon"></nz-icon>
+                </span>
+                <span class="type-card__body">
+                  <span class="type-card__label">{{ opt.label }}</span>
+                  <span class="type-card__desc">{{ opt.desc }}</span>
+                </span>
+                <span class="type-card__check">
+                  <nz-icon nzType="check-circle" class="type-card__check-icon"></nz-icon>
+                </span>
+              </button>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Workflow ─────────────────────────────────────────── -->
+      <section class="section">
+        <div class="section__title-row">
+          <h2 class="section__title">Workflow</h2>
+          <span class="section__count">{{ workflow().length }} trạng thái</span>
+        </div>
+        <p class="section__hint section__hint--top">
+          Các cột trạng thái mà issue sẽ di chuyển qua. Kéo thả để sắp xếp lại thứ tự.
+        </p>
+
+        <ul class="workflow" cdkDropList (cdkDropListDropped)="onDropStatus($event)">
+          @for (status of workflow(); track status.id) {
+            <li class="workflow__item" cdkDrag>
+              <span class="workflow__handle" cdkDragHandle title="Kéo để sắp xếp">
+                <nz-icon nzType="drag"></nz-icon>
+              </span>
+
+              <span class="workflow__dot" [style.background]="stateMeta[status.state].dot"></span>
+
+              <input
+                nz-input
+                class="workflow__name"
+                [ngModel]="status.name"
+                (ngModelChange)="renameStatus(status.id, $event)"
+                placeholder="Tên trạng thái"
+                maxlength="40"
+              />
+
+              <div class="workflow__states">
+                @for (opt of stateOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="workflow__state"
+                    [class.workflow__state--active]="status.state === opt.value"
+                    (click)="changeStatusState(status.id, opt.value)"
+                  >
+                    <span class="workflow__state-dot" [style.background]="opt.dot"></span>
+                    {{ opt.label }}
+                  </button>
+                }
+              </div>
+
+              <button
+                type="button"
+                class="workflow__remove"
+                title="Xóa trạng thái"
+                (click)="removeStatus(status.id)"
+              >
+                <nz-icon nzType="delete"></nz-icon>
+              </button>
+            </li>
+          } @empty {
+            <li class="workflow__empty">
+              <nz-icon nzType="inbox"></nz-icon>
+              Chưa có trạng thái nào. Hãy thêm một trạng thái.
+            </li>
+          }
+        </ul>
+
+        <app-button type="button" variant="secondary" [leftIcon]="'plus'" (click)="addStatus()">
+          Thêm trạng thái
+        </app-button>
+      </section>
+    </div>
+
+    <!-- ── Footer actions ─────────────────────────────────────── -->
+    <div class="create-project__actions">
+      <app-button type="button" variant="secondary" (click)="onBack()">Hủy</app-button>
+      <app-button type="button" variant="primary" [leftIcon]="'plus-circle'" (click)="onCreate()">
+        Tạo project
+      </app-button>
+    </div>
+  </main>
+</div>

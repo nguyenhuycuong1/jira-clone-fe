@@ -29,6 +29,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/home/home.component'),
         title: 'Trang chủ',
       },
+      {
+        path: 'create-project',
+        loadComponent: () => import('./features/create-project/create-project.component'),
+        title: 'Tạo project mới',
+      },
     ],
   },
 ];

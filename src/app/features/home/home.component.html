@@ -1,2 +1,19 @@
-
-<app-button (click)="logout()" >Logout</app-button>
+<div class="home">
+  <div class="home__card">
+    <h1 class="home__title">
+      Xin chào, {{ account?.displayName || 'bạn' }} 👋
+    </h1>
+    <p class="home__desc">
+      Bắt đầu bằng cách tạo project đầu tiên của bạn. Bạn có thể quản lý issue,
+      workflow và team ngay trong không gian này.
+    </p>
+    <app-button type="button" variant="primary" [leftIcon]="'plus-circle'" (click)="goToCreateProject()">
+      Tạo project mới
+    </app-button>
+    <div class="home__footer">
+      <app-button type="button" variant="ghost" [leftIcon]="'logout'" (click)="logout()">
+        Đăng xuất
+      </app-button>
+    </div>
+  </div>
+</div>
